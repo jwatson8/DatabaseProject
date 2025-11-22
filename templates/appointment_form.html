@@ -31,10 +31,16 @@
   </div>
 
   <div class="mb-3">
-    <label class="form-label">Date & Time</label>
-    <input name="appointment_datetime" type="datetime-local" class="form-control"
-           value="{{ appointment.appointment_datetime[:16]|replace(' ', 'T') if appointment and appointment.appointment_datetime else '' }}" required>
-    <div class="form-text">Use local date/time (YYYY-MM-DD HH:MM)</div>
+    <label class="form-label">Start</label>
+    <input name="start_time" type="datetime-local" class="form-control"
+           value="{{ appointment.start_time[:16]|replace(' ', 'T') if appointment and appointment.start_time else '' }}" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">End</label>
+    <input name="end_time" type="datetime-local" class="form-control"
+           value="{{ appointment.end_time[:16]|replace(' ', 'T') if appointment and appointment.end_time else '' }}">
+    <div class="form-text">Use local date/time (YYYY-MM-DD HH:MM). End is optional.</div>
   </div>
 
   <div class="mb-3">

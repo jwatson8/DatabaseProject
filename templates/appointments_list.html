@@ -10,7 +10,8 @@
   <thead>
     <tr>
       <th>ID</th>
-      <th>Date / Time</th>
+      <th>Start</th>
+      <th>End</th>
       <th>Client</th>
       <th>Service</th>
       <th>Notes</th>
@@ -21,7 +22,8 @@
     {% for a in appointments %}
     <tr>
       <td>{{ a.appointment_id }}</td>
-      <td>{{ a.appointment_datetime }}</td>
+      <td>{{ a.start_time }}</td>
+      <td>{{ a.end_time if a.end_time else '' }}</td>
       <td>
         {% if a.first_name %}
           {{ a.first_name }} {{ a.last_name }}

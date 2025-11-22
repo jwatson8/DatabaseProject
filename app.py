@@ -247,13 +247,16 @@ def appointments_list():
     db = get_db()
     appointments = db.execute(
         """
-        SELECT A.appointment_id, A.appointment_datetime, A.notes,
+        SELECT A.appointment_id,
+               A.start_datetime AS start_time,
+               A.end_datetime AS end_time,
+               A.notes,
                C.client_id, C.first_name, C.last_name,
                S.service_id, S.service_name
         FROM APPOINTMENTS A
         LEFT JOIN CLIENTS C ON A.client_id = C.client_id
         LEFT JOIN SERVICES S ON A.service_id = S.service_id
-        ORDER BY A.appointment_datetime DESC
+        ORDER BY A.start_datetime DESC
         """
     ).fetchall()
     return render_template("appointments_list.html", appointments=appointments)
@@ -274,13 +277,14 @@ def appointment_create():
         client_id = request.form["client_id"]
         service_id = request.form["service_id"]
         # datetime-local sends 'YYYY-MM-DDTHH:MM' — store as 'YYYY-MM-DD HH:MM'
-        appt_dt = request.form["appointment_datetime"].strip()
-        appt_dt = appt_dt.replace("T", " ")
+        start_time = request.form["start_time"].strip().replace("T", " ")
+        end_time = request.form.get("end_time", "").strip()
+        end_time = end_time.replace("T", " ") if end_time else None
         notes = request.form.get("notes", "").strip()
 
         db.execute(
-            "INSERT INTO APPOINTMENTS (client_id, service_id, appointment_datetime, notes) VALUES (?, ?, ?, ?)",
-            (client_id, service_id, appt_dt, notes),
+            "INSERT INTO APPOINTMENTS (client_id, service_id, start_datetime, end_datetime, notes) VALUES (?, ?, ?, ?, ?)",
+            (client_id, service_id, start_time, end_time, notes),
         )
         db.commit()
         return redirect(url_for("appointments_list"))
@@ -293,7 +297,15 @@ def appointment_create():
 def appointment_edit(appointment_id):
     db = get_db()
     appointment = db.execute(
-        "SELECT * FROM APPOINTMENTS WHERE appointment_id = ?", (appointment_id,)
+        """
+        SELECT appointment_id, client_id, service_id,
+               start_datetime AS start_time,
+               end_datetime AS end_time,
+               notes
+        FROM APPOINTMENTS
+        WHERE appointment_id = ?
+        """,
+        (appointment_id,),
     ).fetchone()
 
     if appointment is None:
@@ -309,12 +321,14 @@ def appointment_edit(appointment_id):
     if request.method == "POST":
         client_id = request.form["client_id"]
         service_id = request.form["service_id"]
-        appt_dt = request.form["appointment_datetime"].strip().replace("T", " ")
+        start_time = request.form["start_time"].strip().replace("T", " ")
+        end_time = request.form.get("end_time", "").strip()
+        end_time = end_time.replace("T", " ") if end_time else None
         notes = request.form.get("notes", "").strip()
 
         db.execute(
-            "UPDATE APPOINTMENTS SET client_id = ?, service_id = ?, appointment_datetime = ?, notes = ? WHERE appointment_id = ?",
-            (client_id, service_id, appt_dt, notes, appointment_id),
+            "UPDATE APPOINTMENTS SET client_id = ?, service_id = ?, start_datetime = ?, end_datetime = ?, notes = ? WHERE appointment_id = ?",
+            (client_id, service_id, start_time, end_time, notes, appointment_id),
         )
         db.commit()
         return redirect(url_for("appointments_list"))
