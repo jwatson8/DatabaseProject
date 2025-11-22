@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Invoices</h2>
+  <a href="{{ url_for('invoice_create') }}" class="btn btn-primary">New Invoice</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Client</th>
+      <th>Appointment</th>
+      <th>Amount</th>
+      <th>Issued</th>
+      <th>Due</th>
+      <th>Paid</th>
+      <th>Notes</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for inv in invoices %}
+    <tr>
+      <td>{{ inv.invoice_id }}</td>
+      <td>{{ inv.client_id if inv.client_id is not none else '' }}</td>
+      <td>{{ inv.appointment_id if inv.appointment_id is not none else '' }}</td>
+      <td>{{ inv.amount if inv.amount is not none else '' }}</td>
+      <td>{{ inv.issued_date if inv.issued_date is defined else (inv.created_at if inv.created_at is defined else '') }}</td>
+      <td>{{ inv.due_date if inv.due_date is defined else '' }}</td>
+      <td>{{ 'Yes' if (inv.paid == 1 or inv.paid == '1') else 'No' if inv.paid is not none else '' }}</td>
+      <td>{{ inv.notes if inv.notes is defined else '' }}</td>
+      <td>
+        <a href="{{ url_for('invoice_edit', invoice_id=inv.invoice_id) }}" class="btn btn-sm btn-secondary">Edit</a>
+        <form action="{{ url_for('invoice_delete', invoice_id=inv.invoice_id) }}" method="post" style="display:inline" onsubmit="return confirm('Delete this invoice?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

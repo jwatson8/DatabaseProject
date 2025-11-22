@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ 'Edit Invoice' if invoice else 'New Invoice' }}</h2>
+
+<form method="post">
+  {% if 'client_id' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Client</label>
+    <select name="client_id" class="form-select">
+      <option value="">-- none --</option>
+      {% for c in clients %}
+        <option value="{{ c.client_id }}" {% if invoice and invoice.client_id == c.client_id %}selected{% endif %}>{{ c.first_name }} {{ c.last_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  {% if 'appointment_id' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Appointment</label>
+    <select name="appointment_id" class="form-select">
+      <option value="">-- none --</option>
+      {% for a in appointments %}
+        <option value="{{ a.appointment_id }}" {% if invoice and invoice.appointment_id == a.appointment_id %}selected{% endif %}>{{ a.start_datetime }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  {% if 'amount' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Amount</label>
+    <input name="amount" class="form-control" value="{{ invoice.amount if invoice and invoice.amount is defined else '' }}">
+  </div>
+  {% endif %}
+
+  {% if 'issued_date' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Issued</label>
+    <input name="issued_date" type="datetime-local" class="form-control"
+           value="{{ (invoice.issued_date[:16]|replace(' ', 'T')) if invoice and invoice.issued_date is defined and invoice.issued_date else '' }}">
+  </div>
+  {% endif %}
+
+  {% if 'due_date' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Due</label>
+    <input name="due_date" type="datetime-local" class="form-control"
+           value="{{ (invoice.due_date[:16]|replace(' ', 'T')) if invoice and invoice.due_date is defined and invoice.due_date else '' }}">
+  </div>
+  {% endif %}
+
+  {% if 'paid' in invoice_cols %}
+  <div class="form-check mb-3">
+    <input name="paid" class="form-check-input" type="checkbox" value="1" id="paidCheck"
+           {% if invoice and invoice.paid == 1 %}checked{% endif %}>
+    <label class="form-check-label" for="paidCheck">Paid</label>
+  </div>
+  {% endif %}
+
+  {% if 'notes' in invoice_cols %}
+  <div class="mb-3">
+    <label class="form-label">Notes</label>
+    <textarea name="notes" class="form-control">{{ invoice.notes if invoice and invoice.notes is defined else '' }}</textarea>
+  </div>
+  {% endif %}
+
+  <button class="btn btn-primary">Save</button>
+  <a href="{{ url_for('invoices_list') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
