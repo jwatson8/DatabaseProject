@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Appointments</h2>
+  <a href="{{ url_for('appointment_create') }}" class="btn btn-primary">New Appointment</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date / Time</th>
+      <th>Client</th>
+      <th>Service</th>
+      <th>Notes</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in appointments %}
+    <tr>
+      <td>{{ a.appointment_id }}</td>
+      <td>{{ a.appointment_datetime }}</td>
+      <td>
+        {% if a.first_name %}
+          {{ a.first_name }} {{ a.last_name }}
+        {% else %}
+          (client deleted)
+        {% endif %}
+      </td>
+      <td>{{ a.service_name if a.service_name else '(service deleted)' }}</td>
+      <td>{{ a.notes }}</td>
+      <td>
+        <a href="{{ url_for('appointment_edit', appointment_id=a.appointment_id) }}" class="btn btn-sm btn-secondary">Edit</a>
+        <form action="{{ url_for('appointment_delete', appointment_id=a.appointment_id) }}"
+              method="post" style="display:inline"
+              onsubmit="return confirm('Delete this appointment?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
