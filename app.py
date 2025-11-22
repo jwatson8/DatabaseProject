@@ -240,5 +240,96 @@ def service_delete(service_id):
     return redirect(url_for("services_list"))
 
 
+# --------- ROUTES: APPOINTMENTS CRUD ---------
+@app.route("/appointments")
+@login_required
+def appointments_list():
+    db = get_db()
+    appointments = db.execute(
+        """
+        SELECT A.appointment_id, A.appointment_datetime, A.notes,
+               C.client_id, C.first_name, C.last_name,
+               S.service_id, S.service_name
+        FROM APPOINTMENTS A
+        LEFT JOIN CLIENTS C ON A.client_id = C.client_id
+        LEFT JOIN SERVICES S ON A.service_id = S.service_id
+        ORDER BY A.appointment_datetime DESC
+        """
+    ).fetchall()
+    return render_template("appointments_list.html", appointments=appointments)
+
+
+@app.route("/appointments/new", methods=["GET", "POST"])
+@login_required
+def appointment_create():
+    db = get_db()
+    clients = db.execute(
+        "SELECT client_id, first_name, last_name FROM CLIENTS ORDER BY last_name, first_name"
+    ).fetchall()
+    services = db.execute(
+        "SELECT service_id, service_name FROM SERVICES ORDER BY service_name"
+    ).fetchall()
+
+    if request.method == "POST":
+        client_id = request.form["client_id"]
+        service_id = request.form["service_id"]
+        # datetime-local sends 'YYYY-MM-DDTHH:MM' — store as 'YYYY-MM-DD HH:MM'
+        appt_dt = request.form["appointment_datetime"].strip()
+        appt_dt = appt_dt.replace("T", " ")
+        notes = request.form.get("notes", "").strip()
+
+        db.execute(
+            "INSERT INTO APPOINTMENTS (client_id, service_id, appointment_datetime, notes) VALUES (?, ?, ?, ?)",
+            (client_id, service_id, appt_dt, notes),
+        )
+        db.commit()
+        return redirect(url_for("appointments_list"))
+
+    return render_template("appointment_form.html", appointment=None, clients=clients, services=services)
+
+
+@app.route("/appointments/<int:appointment_id>/edit", methods=["GET", "POST"])
+@login_required
+def appointment_edit(appointment_id):
+    db = get_db()
+    appointment = db.execute(
+        "SELECT * FROM APPOINTMENTS WHERE appointment_id = ?", (appointment_id,)
+    ).fetchone()
+
+    if appointment is None:
+        return "Appointment not found", 404
+
+    clients = db.execute(
+        "SELECT client_id, first_name, last_name FROM CLIENTS ORDER BY last_name, first_name"
+    ).fetchall()
+    services = db.execute(
+        "SELECT service_id, service_name FROM SERVICES ORDER BY service_name"
+    ).fetchall()
+
+    if request.method == "POST":
+        client_id = request.form["client_id"]
+        service_id = request.form["service_id"]
+        appt_dt = request.form["appointment_datetime"].strip().replace("T", " ")
+        notes = request.form.get("notes", "").strip()
+
+        db.execute(
+            "UPDATE APPOINTMENTS SET client_id = ?, service_id = ?, appointment_datetime = ?, notes = ? WHERE appointment_id = ?",
+            (client_id, service_id, appt_dt, notes, appointment_id),
+        )
+        db.commit()
+        return redirect(url_for("appointments_list"))
+
+    return render_template("appointment_form.html", appointment=appointment, clients=clients, services=services)
+
+
+@app.route("/appointments/<int:appointment_id>/delete", methods=["POST"])
+@login_required
+def appointment_delete(appointment_id):
+    db = get_db()
+    db.execute("DELETE FROM APPOINTMENTS WHERE appointment_id = ?", (appointment_id,))
+    db.commit()
+    return redirect(url_for("appointments_list"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
