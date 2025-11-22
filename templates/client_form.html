@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ 'Edit Client' if client else 'New Client' }}</h2>
+
+<form method="post">
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">First Name</label>
+      <input name="first_name" class="form-control"
+             value="{{ client.first_name if client else '' }}" required>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Last Name</label>
+      <input name="last_name" class="form-control"
+             value="{{ client.last_name if client else '' }}" required>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Date of Birth (YYYY-MM-DD)</label>
+    <input name="date_of_birth" class="form-control"
+           value="{{ client.date_of_birth if client else '' }}" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Phone</label>
+    <input name="phone" class="form-control"
+           value="{{ client.phone if client else '' }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input name="email" class="form-control"
+           value="{{ client.email if client else '' }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Address</label>
+    <input name="address" class="form-control"
+           value="{{ client.address if client else '' }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Emergency Contact Name</label>
+    <input name="emergency_contact_name" class="form-control"
+           value="{{ client.emergency_contact_name if client else '' }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Emergency Contact Phone</label>
+    <input name="emergency_contact_phone" class="form-control"
+           value="{{ client.emergency_contact_phone if client else '' }}">
+  </div>
+
+  <button class="btn btn-primary">Save</button>
+  <a href="{{ url_for('clients_list') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
