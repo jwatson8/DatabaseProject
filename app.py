@@ -182,5 +182,63 @@ def client_delete(client_id):
     return redirect(url_for("clients_list"))
 
 
+# --------- ROUTES: SERVICES CRUD ---------
+@app.route("/services")
+@login_required
+def services_list():
+    db = get_db()
+    services = db.execute(
+        "SELECT * FROM SERVICES ORDER BY service_name"
+    ).fetchall()
+    return render_template("services_list.html", services=services)
+
+
+@app.route("/services/new", methods=["GET", "POST"])
+@login_required
+def service_create():
+    if request.method == "POST":
+        name = request.form["service_name"].strip()
+        db = get_db()
+        db.execute(
+            "INSERT INTO SERVICES (service_name) VALUES (?)",
+            (name,),
+        )
+        db.commit()
+        return redirect(url_for("services_list"))
+    return render_template("service_form.html", service=None)
+
+
+@app.route("/services/<int:service_id>/edit", methods=["GET", "POST"])
+@login_required
+def service_edit(service_id):
+    db = get_db()
+    service = db.execute(
+        "SELECT * FROM SERVICES WHERE service_id = ?", (service_id,)
+    ).fetchone()
+
+    if service is None:
+        return "Service not found", 404
+
+    if request.method == "POST":
+        name = request.form["service_name"].strip()
+        db.execute(
+            "UPDATE SERVICES SET service_name = ? WHERE service_id = ?",
+            (name, service_id),
+        )
+        db.commit()
+        return redirect(url_for("services_list"))
+
+    return render_template("service_form.html", service=service)
+
+
+@app.route("/services/<int:service_id>/delete", methods=["POST"])
+@login_required
+def service_delete(service_id):
+    db = get_db()
+    db.execute("DELETE FROM SERVICES WHERE service_id = ?", (service_id,))
+    db.commit()
+    return redirect(url_for("services_list"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
