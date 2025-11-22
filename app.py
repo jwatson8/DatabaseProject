@@ -345,5 +345,99 @@ def appointment_delete(appointment_id):
     return redirect(url_for("appointments_list"))
 
 
+# --------- ROUTES: INVOICES CRUD ---------
+@app.route("/invoices")
+@login_required
+def invoices_list():
+    db = get_db()
+    invoices = db.execute("SELECT * FROM INVOICES ORDER BY invoice_id DESC").fetchall()
+    return render_template("invoices_list.html", invoices=invoices)
+
+
+def _invoice_columns(db):
+    cols = db.execute("PRAGMA table_info('INVOICES')").fetchall()
+    # return list of column names excluding primary invoice_id
+    return [c["name"] for c in cols if c["name"] != "invoice_id"]
+
+
+@app.route("/invoices/new", methods=["GET", "POST"])
+@login_required
+def invoice_create():
+    db = get_db()
+    invoice_cols = _invoice_columns(db)
+
+    # helpful lists for selects (if those columns exist)
+    clients = db.execute("SELECT client_id, first_name, last_name FROM CLIENTS ORDER BY last_name, first_name").fetchall()
+    appointments = db.execute("SELECT appointment_id, start_datetime FROM APPOINTMENTS ORDER BY start_datetime DESC").fetchall()
+
+    if request.method == "POST":
+        keys = []
+        vals = []
+        for col in invoice_cols:
+            # map form names: use same names as columns; 'paid' checkbox handled specially
+            if col == "paid":
+                v = 1 if request.form.get("paid") else 0
+            else:
+                v = request.form.get(col)
+                if isinstance(v, str) and "T" in v and ("issued_date" in col or "date" in col or "time" in col):
+                    v = v.replace("T", " ")
+            # include only provided values (allow NULL if blank)
+            keys.append(col)
+            vals.append(v if v != "" else None)
+
+        if keys:
+            placeholders = ",".join(["?"] * len(keys))
+            q = f"INSERT INTO INVOICES ({', '.join(keys)}) VALUES ({placeholders})"
+            db.execute(q, tuple(vals))
+            db.commit()
+        return redirect(url_for("invoices_list"))
+
+    return render_template("invoice_form.html", invoice=None, invoice_cols=invoice_cols, clients=clients, appointments=appointments)
+
+
+@app.route("/invoices/<int:invoice_id>/edit", methods=["GET", "POST"])
+@login_required
+def invoice_edit(invoice_id):
+    db = get_db()
+    invoice = db.execute("SELECT * FROM INVOICES WHERE invoice_id = ?", (invoice_id,)).fetchone()
+    if invoice is None:
+        return "Invoice not found", 404
+
+    invoice_cols = _invoice_columns(db)
+    clients = db.execute("SELECT client_id, first_name, last_name FROM CLIENTS ORDER BY last_name, first_name").fetchall()
+    appointments = db.execute("SELECT appointment_id, start_datetime FROM APPOINTMENTS ORDER BY start_datetime DESC").fetchall()
+
+    if request.method == "POST":
+        sets = []
+        vals = []
+        for col in invoice_cols:
+            if col == "paid":
+                v = 1 if request.form.get("paid") else 0
+            else:
+                v = request.form.get(col)
+                if isinstance(v, str) and "T" in v and ("issued_date" in col or "date" in col or "time" in col):
+                    v = v.replace("T", " ")
+            sets.append(f"{col} = ?")
+            vals.append(v if v != "" else None)
+
+        if sets:
+            q = f"UPDATE INVOICES SET {', '.join(sets)} WHERE invoice_id = ?"
+            vals.append(invoice_id)
+            db.execute(q, tuple(vals))
+            db.commit()
+        return redirect(url_for("invoices_list"))
+
+    return render_template("invoice_form.html", invoice=invoice, invoice_cols=invoice_cols, clients=clients, appointments=appointments)
+
+
+@app.route("/invoices/<int:invoice_id>/delete", methods=["POST"])
+@login_required
+def invoice_delete(invoice_id):
+    db = get_db()
+    db.execute("DELETE FROM INVOICES WHERE invoice_id = ?", (invoice_id,))
+    db.commit()
+    return redirect(url_for("invoices_list"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
